@@ -11,7 +11,7 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 
 // Map to keep pending delete timeouts for messages the bot hasn't responded to
 const pendingDeletes = new Map();
-const DEFAULT_DELETE_TIMEOUT_MS = 30 * 1000; // 30 seconds
+const DEFAULT_DELETE_TIMEOUT_MS = 1 * 1000; // 30 seconds
 
 function _pendingKey(chatId, messageId) {
   return `${chatId}:${messageId}`;
