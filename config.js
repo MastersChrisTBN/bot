@@ -1,7 +1,4 @@
-// Jangan commit token nyata ke repositori publik.
-// Untuk keamanan, lebih baik gunakan environment variable.
-// File ini menyediakan fallback bila environment variable tidak ada.
 module.exports = {
-  TOKEN: process.env.BOT_TOKEN || '8534902870:AAF1jcNBlkZWG-TIKWA5XkvCqu73hg66JTg',
-  WEBAPP_URL: process.env.WEBAPP_URL || 'https://masterschristbn.github.io/bot/webapp/ad.html'
+  TOKEN: process.env.BOT_TOKEN || 'PASTE_YOUR_TOKEN_HERE',
+  WEBAPP_URL: process.env.WEBAPP_URL || 'https://MastersChrisTBN.github.io/bot/webapp/ad.html'
 };
