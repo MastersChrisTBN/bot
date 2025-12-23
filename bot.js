@@ -1,6 +1,7 @@
+'use strict';
 const fs = require('fs');
 const TelegramBot = require('node-telegram-bot-api');
-const { TOKEN } = require('./config');
+const { TOKEN, WEBAPP_URL } = require('./config');
 
 if (!TOKEN || TOKEN === 'PASTE_YOUR_TOKEN_HERE') {
   console.error('ERROR: Token bot belum dikonfigurasikan. Buka config.js dan masukkan token Telegram Anda.');
@@ -110,6 +111,29 @@ bot.on('message', (msg) => {
   // schedule delete for user messages; if the bot replies to the message (using sendBotReply with replyToMessageId)
   // the pending timeout will be cleared
   scheduleDelete(msg);
+
+  // Handle Web App responses (Telegram Web App dapat mengirim data ke bot via web_app_data)
+  try {
+    if (msg && msg.web_app_data && msg.web_app_data.data) {
+      const data = msg.web_app_data.data; // string sent from Web App
+      // contoh: data === 'ad_shown'
+      if (data === 'ad_shown') {
+        // user sudah menonton iklan / web app menandakan selesai -> lanjut ke proses login
+        sendBotReply(msg.chat.id, '✅ Terima kasih. Iklan selesai ditayangkan. Silakan lanjutkan proses login.', {}, msg.message_id)
+          .catch(() => {});
+        // Di sini Anda bisa memulai flow login (mengirim prompt username/password, atau membuka webapp login lagi)
+      } else if (data === 'ad_cancelled') {
+        sendBotReply(msg.chat.id, '⛔ Anda membatalkan menonton iklan. Login dibatalkan.', {}, msg.message_id)
+          .catch(() => {});
+      } else {
+        // kebijakan: terima data lain jika Anda definisikan
+        sendBotReply(msg.chat.id, `📨 WebApp mengirim data: ${data}`, {}, msg.message_id)
+          .catch(() => {});
+      }
+    }
+  } catch (err) {
+    // ignore parsing errors
+  }
 
   // Handle registration steps if user is in the middle of the form
   const chatId = msg.chat.id;
@@ -276,6 +300,24 @@ bot.on('callback_query', (callbackQuery) => {
   } else if (action === 'cancel_register') {
     userStates.delete(chatId);
     sendBotReply(chatId, '⛔ Pendaftaran dibatalkan.', {}, msg.message_id)
+      .catch(() => {});
+    return;
+  } else if (action === 'login') {
+    // Tampilkan tombol yang membuka Telegram Web App untuk menayangkan iklan sebelum login
+    const webAppUrl = WEBAPP_URL || 'https://your-host.example.com/webapp/ad.html';
+    const keyboard = {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '▶️ Tonton Iklan untuk Login', web_app: { url: webAppUrl } }],
+          [{ text: '❌ Batal', callback_data: 'cancel_login' }]
+        ]
+      }
+    };
+    sendBotReply(chatId, 'Sebelum login, mohon tonton video iklan singkat berikut (membuka web app).', keyboard, msg.message_id)
+      .catch(err => console.error('Gagal mengirim tombol web app login:', err));
+    return;
+  } else if (action === 'cancel_login') {
+    sendBotReply(chatId, '⛔ Login dibatalkan.', {}, msg.message_id)
       .catch(() => {});
     return;
   } else if (action === 'login') {
